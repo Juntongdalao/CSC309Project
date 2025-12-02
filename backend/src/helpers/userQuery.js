@@ -67,9 +67,8 @@ export function buildUserFilters({ name, role, verified, activated }) {
         if (a === 'true') {
             filters.AND.push({ passwordHash: { not: '' } });
         } else {
-            filters.AND.push({
-                OR: [{ passwordHash: '' }, { passwordHash: null }],
-            });
+            // treat "not activated" as "no password set yet"
+            filters.AND.push({ passwordHash: '' });
         }
     }
 

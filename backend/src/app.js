@@ -14,7 +14,15 @@ dotenv.config(); // Loads variables from a .env file into process.env
 const app = express();
 
 // Global middlewares
-app.use(cors()); // Frontend on another port) can access the backend
+
+// Frontend on another port) can access the backend
+app.use(cors({
+    origin: 'http://localhost:5173',  // Port when run npm run dev
+    methods: ['GET','POST','PUT','DELETE','PATCH'],
+    allowedHeaders: ['Content-Type','Authorization'],
+    credentials: true,
+}));
+
 app.use(express.json()); // Parses incoming JSON request bodies (access via req.body)
 
 app.use('/auth', authRoutes);

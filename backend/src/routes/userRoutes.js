@@ -364,10 +364,12 @@ router.patch('/:userId', authenticateToken, requireRole('manager'), async (req, 
     }
     let {email, verified, suspicious, role} = req.body;
     if (email === null) email = undefined;
-    if (verified === false || verified === null || typeof verified === 'undefined') {
+    if (typeof verified === 'undefined' || verified === null) {
         verified = undefined;
     }
-    if (suspicious === null) suspicious = undefined;
+    if (typeof suspicious === 'undefined' || suspicious === null) {
+        suspicious = undefined;
+    }
     if (role === null) role = undefined;
     if (email !== undefined && !isValidUofTEmail(email)) {
         return res.status(400).json({ error: 'email must be a valid UofT address.' });
