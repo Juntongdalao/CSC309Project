@@ -7,6 +7,11 @@ import { Card } from "../components/ui";
 import { apiFetch } from "../lib/apiClient";
 import { formatDateTime } from "../lib/date";
 
+const baseInputClass =
+    "input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200";
+const textareaClass =
+    "textarea textarea-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200";
+
 export default function OrganizerEventDetailPage() {
     const { eventId } = useParams();
     const queryClient = useQueryClient();
@@ -152,27 +157,29 @@ export default function OrganizerEventDetailPage() {
 
             <Card title="Edit basics">
                 <form
-                    className="grid gap-3"
+                    className="grid gap-4"
                     onSubmit={(e) => {
                         e.preventDefault();
                         updateMutation.mutate(editValues);
                     }}
                 >
-                    <div className="form-control">
-                        <label className="label text-sm">Location</label>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-neutral/70 pl-1">Location</label>
                         <input
-                            className="input input-bordered"
+                            className={baseInputClass}
                             value={editValues.location}
                             onChange={(e) => setEditValues({ ...editValues, location: e.target.value })}
+                            placeholder="Event location"
                         />
                     </div>
-                    <div className="form-control">
-                        <label className="label text-sm">Description</label>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-neutral/70 pl-1">Description</label>
                         <textarea
-                            className="textarea textarea-bordered"
+                            className={textareaClass}
                             rows={3}
                             value={editValues.description}
                             onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
+                            placeholder="Event description"
                         />
                     </div>
                     <button className="btn btn-primary" type="submit" disabled={updateMutation.isLoading}>
@@ -235,7 +242,7 @@ export default function OrganizerEventDetailPage() {
             </Card>
 
             <Card title="Award points">
-                <div className="mb-4 flex gap-2 rounded-2xl bg-base-200/60 p-1">
+                <div className="mb-6 flex gap-2 rounded-2xl bg-base-200/60 p-1">
                     <button
                         type="button"
                         className={`btn btn-sm flex-1 ${awardMode === "single" ? "btn-primary" : "btn-ghost"}`}
@@ -253,14 +260,14 @@ export default function OrganizerEventDetailPage() {
                         All guests
                     </button>
                 </div>
-                <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAwardSubmit}>
+                <form className="grid gap-4 md:grid-cols-2" onSubmit={handleAwardSubmit}>
                     {awardMode === "single" ? (
-                        <div className="md:col-span-2">
-                            <label className="label text-xs uppercase tracking-wide text-neutral/60">
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="block text-sm font-medium text-neutral/70 pl-1">
                                 Recipient UTORid
                             </label>
                             <input
-                                className="input input-bordered"
+                                className={baseInputClass}
                                 placeholder="Guest UTORid"
                                 value={awardGuestUtorid}
                                 onChange={(e) => setAwardGuestUtorid(e.target.value)}
@@ -275,10 +282,10 @@ export default function OrganizerEventDetailPage() {
                                 : "No guests have RSVPed yet, so there is no one to award."}
                         </div>
                     )}
-                    <div>
-                        <label className="label text-xs uppercase tracking-wide text-neutral/60">Points</label>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-neutral/70 pl-1">Points</label>
                         <input
-                            className="input input-bordered"
+                            className={baseInputClass}
                             type="number"
                             min="1"
                             placeholder="Points"
@@ -288,12 +295,12 @@ export default function OrganizerEventDetailPage() {
                             data-cy="award-points-input"
                         />
                     </div>
-                    <div className="md:col-span-2">
-                        <label className="label text-xs uppercase tracking-wide text-neutral/60">
+                    <div className="md:col-span-2 space-y-2">
+                        <label className="block text-sm font-medium text-neutral/70 pl-1">
                             Note (optional)
                         </label>
                         <textarea
-                            className="textarea textarea-bordered w-full"
+                            className={textareaClass}
                             rows={3}
                             placeholder="Add more context"
                             value={note}

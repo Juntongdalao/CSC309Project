@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { AppShell } from "../components/layout";
 import { Card, DataTable, FilterBar } from "../components/ui";
 import { QueryBoundary } from "../components/feedback";
@@ -17,6 +17,12 @@ export default function ManagerUsersPage() {
     const [activatedFilter, setActivatedFilter] = useState("");
     const [banner, setBanner] = useState("");
     const [updatingId, setUpdatingId] = useState(null);
+
+    const [newUserUtorid, setNewUserUtorid] = useState("");
+    const [newUserName, setNewUserName] = useState("");
+    const [newUserEmail, setNewUserEmail] = useState("");
+    const [userCreateMessage, setUserCreateMessage] = useState("");
+    const [userCreateError, setUserCreateError] = useState("");
 
     const queryClient = useQueryClient();
     const hasSuperPowers = useAuthStore((s) => s.hasRole("superuser"));
@@ -78,6 +84,53 @@ export default function ManagerUsersPage() {
         } finally {
             setUpdatingId(null);
         }
+    }
+
+    const createUserMutation = useMutation({
+        mutationFn: (payload) =>
+            apiFetch("/users", {
+                method: "POST",
+                body: payload,
+            }),
+        onSuccess: (data) => {
+            setUserCreateMessage(
+                `User ${data.utorid} created successfully. Reset token: ${data.resetToken} (expires: ${new Date(data.expiresAt).toLocaleString()})`
+            );
+            setUserCreateError("");
+            setNewUserUtorid("");
+            setNewUserName("");
+            setNewUserEmail("");
+            queryClient.invalidateQueries({ queryKey: ["manager-users"] });
+        },
+        onError: (err) => {
+            setUserCreateMessage("");
+            setUserCreateError(err.message || "Failed to create user.");
+        },
+    });
+
+    function handleCreateUser(e) {
+        e.preventDefault();
+        setUserCreateError("");
+        setUserCreateMessage("");
+
+        if (!newUserUtorid.trim()) {
+            setUserCreateError("UTORid is required.");
+            return;
+        }
+        if (!newUserName.trim()) {
+            setUserCreateError("Name is required.");
+            return;
+        }
+        if (!newUserEmail.trim()) {
+            setUserCreateError("Email is required.");
+            return;
+        }
+
+        createUserMutation.mutate({
+            utorid: newUserUtorid.trim(),
+            name: newUserName.trim(),
+            email: newUserEmail.trim(),
+        });
     }
 
     const columns = useMemo(
@@ -234,6 +287,64 @@ export default function ManagerUsersPage() {
                     <p className="text-sm text-primary">{banner}</p>
                 </Card>
             )}
+
+            <Card title="Create user account">
+                {userCreateError && (
+                    <div className="alert alert-error mb-4">
+                        <span>{userCreateError}</span>
+                    </div>
+                )}
+                {userCreateMessage && (
+                    <div className="alert alert-success mb-4">
+                        <span className="text-sm whitespace-pre-wrap">{userCreateMessage}</span>
+                    </div>
+                )}
+                <form className="space-y-5" onSubmit={handleCreateUser}>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-neutral/70 pl-1">
+                                UTORid
+                            </label>
+                            <input
+                                className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                                value={newUserUtorid}
+                                onChange={(e) => setNewUserUtorid(e.target.value)}
+                                placeholder="e.g., clive123"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-neutral/70 pl-1">
+                                Name
+                            </label>
+                            <input
+                                className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                                value={newUserName}
+                                onChange={(e) => setNewUserName(e.target.value)}
+                                placeholder="e.g., John Doe"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-neutral/70 pl-1">
+                                Email
+                            </label>
+                            <input
+                                className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                                type="email"
+                                value={newUserEmail}
+                                onChange={(e) => setNewUserEmail(e.target.value)}
+                                placeholder="e.g., john.doe@utoronto.ca"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={createUserMutation.isLoading}
+                    >
+                        {createUserMutation.isLoading ? "Creating…" : "Create user"}
+                    </button>
+                </form>
+            </Card>
 
             <Card title="Filters">
                 <FilterBar onSubmit={handleFilters} onReset={handleResetFilters}>

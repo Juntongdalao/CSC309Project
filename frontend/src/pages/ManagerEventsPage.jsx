@@ -29,6 +29,8 @@ export default function ManagerEventsPage() {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+    const [showFull, setShowFull] = useState("");
+    const [orderBy, setOrderBy] = useState("name");
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [formValues, setFormValues] = useState(emptyEventForm);
     const [organizerUtorid, setOrganizerUtorid] = useState("");
@@ -38,16 +40,16 @@ export default function ManagerEventsPage() {
     const [editValues, setEditValues] = useState(null);
 
     const listQuery = useQuery({
-        queryKey: ["manager-events", { page, search }],
+        queryKey: ["manager-events", { page, search, showFull, orderBy }],
         queryFn: () => {
             const params = new URLSearchParams();
             params.set("page", String(page));
             params.set("limit", String(PAGE_SIZE));
-            params.set("showFull", "false");
             if (search.trim()) params.set("name", search.trim());
+            if (showFull) params.set("showFull", showFull);
+            params.set("orderBy", orderBy);
             return apiFetch(`/events?${params.toString()}`);
         },
-        keepPreviousData: true,
     });
     const { data, isLoading, isError, error } = listQuery;
 
@@ -176,6 +178,12 @@ export default function ManagerEventsPage() {
     function handleListFilter(e) {
         e.preventDefault();
         setPage(1);
+    }
+
+    function handleOrderByChange(field) {
+        setOrderBy(field);
+        setPage(1);
+        queryClient.invalidateQueries({ queryKey: ["manager-events"] });
     }
 
     function handleCreate(e) {
@@ -320,12 +328,39 @@ export default function ManagerEventsPage() {
 
             <Card title="Events list">
                 <FilterBar onSubmit={handleListFilter}>
-                    <input
-                        className={`${smallInputClass} md:w-64`}
-                        placeholder="Search by name"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                    <div className="space-y-2">
+                        <label className="text-xs uppercase text-neutral/70 pl-1">Search</label>
+                        <input
+                            className={smallInputClass}
+                            placeholder="Name"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs uppercase text-neutral/70 pl-1">Capacity</label>
+                        <select
+                            className="select select-bordered select-sm rounded-2xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                            value={showFull}
+                            onChange={(e) => setShowFull(e.target.value)}
+                        >
+                            <option value="">All</option>
+                            <option value="true">Full</option>
+                            <option value="false">Not Full</option>
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs uppercase text-neutral/70 pl-1">Sort by</label>
+                        <select
+                            className="select select-bordered select-sm rounded-2xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                            value={orderBy}
+                            onChange={(e) => handleOrderByChange(e.target.value)}
+                        >
+                            <option value="name">Name</option>
+                            <option value="startTime">Start Time</option>
+                            <option value="endTime">End Time</option>
+                        </select>
+                    </div>
                     <button className="btn btn-primary btn-sm" type="submit">
                         Apply
                     </button>
@@ -333,6 +368,27 @@ export default function ManagerEventsPage() {
                 <QueryBoundary query={listQuery} loadingLabel="Loading events…">
                     <DataTable columns={columns} data={data?.results ?? []} />
                 </QueryBoundary>
+                {data && data.count > 0 && (
+                    <div className="mt-4 flex items-center justify-between">
+                        <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm text-neutral/70">
+                            Page {page} of {Math.ceil(data.count / PAGE_SIZE) || 1}
+                        </span>
+                        <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setPage((p) => (p < Math.ceil(data.count / PAGE_SIZE) ? p + 1 : p))}
+                            disabled={!data.count || page >= Math.ceil(data.count / PAGE_SIZE)}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </Card>
 
             {selectedEventId && (

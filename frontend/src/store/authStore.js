@@ -28,6 +28,11 @@ const useAuthStore = create((set, get) => ({
     hasRole(role) {
         const target = String(role).toLowerCase();
         if (target === "organizer") {
+            // Managers and superusers can access organizer pages
+            const currentRole = String(get().user?.role || "regular").toLowerCase();
+            if (currentRole === "manager" || currentRole === "superuser") {
+                return true;
+            }
             return !!get().user?.organizer;
         }
         const currentRole = String(get().user?.role || "regular").toLowerCase();
