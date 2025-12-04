@@ -332,12 +332,15 @@ router.get('/transactions/:transactionId', authenticateToken, requireRole('manag
             include: {
                 user: {select: {utorid: true}},
                 createdBy: {select: {utorid: true}},
+                processedBy: {select: {utorid: true}},
             },
         });
         if (!tx) {
             return res.status(404).json({ error: 'Transaction not found' });
         }
-        return res.status(200).json(txToResponse(tx));
+        const response = txToResponse(tx);
+        response.processedBy = tx.processedBy?.utorid ?? null;
+        return res.status(200).json(response);
     } catch (err) {
         console.error('GET /transactions/:id error:', err);
         return res.status(500).json({ error: 'Internal Server Error' });

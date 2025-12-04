@@ -4,6 +4,7 @@ import { AppShell } from "../components/layout";
 import { Card, DataTable, FilterBar } from "../components/ui";
 import { QueryBoundary } from "../components/feedback";
 import { apiFetch } from "../lib/apiClient";
+import { cn } from "../lib/cn";
 
 const PAGE_SIZE = 10;
 
@@ -21,6 +22,23 @@ function formatAmount(tx) {
         return `-${tx.redeemed ?? Math.abs(tx.amount)} pts`;
     }
     return `${tx.amount >= 0 ? "+" : "-"}${Math.abs(tx.amount)} pts`;
+}
+
+function getRowColorClass(type) {
+    switch (type) {
+        case "purchase":
+            return "bg-emerald-100 hover:bg-emerald-200 border-l-4 border-emerald-500";
+        case "redemption":
+            return "bg-amber-100 hover:bg-amber-200 border-l-4 border-amber-500";
+        case "transfer":
+            return "bg-blue-100 hover:bg-blue-200 border-l-4 border-blue-500";
+        case "adjustment":
+            return "bg-purple-100 hover:bg-purple-200 border-l-4 border-purple-500";
+        case "event":
+            return "bg-pink-100 hover:bg-pink-200 border-l-4 border-pink-500";
+        default:
+            return "";
+    }
 }
 
 export default function MyTransactionsPage() {
@@ -182,6 +200,7 @@ export default function MyTransactionsPage() {
                         columns={columns}
                         data={rows}
                         emptyMessage="No transactions found."
+                        getRowClassName={(row) => getRowColorClass(row.type)}
                     />
                 </QueryBoundary>
             </Card>

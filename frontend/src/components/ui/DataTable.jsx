@@ -6,6 +6,7 @@ export default function DataTable({
     keyExtractor = (row, index) => row.id ?? index,
     emptyMessage = "No records found.",
     className,
+    getRowClassName,
 }) {
     if (!Array.isArray(columns) || columns.length === 0) {
         throw new Error("DataTable requires at least one column definition");
@@ -35,7 +36,10 @@ export default function DataTable({
                         </tr>
                     )}
                     {data.map((row, rowIndex) => (
-                        <tr key={keyExtractor(row, rowIndex)} className="hover">
+                        <tr 
+                            key={keyExtractor(row, rowIndex)} 
+                            className={cn("hover border-b border-base-300/50", getRowClassName ? getRowClassName(row, rowIndex) : "")}
+                        >
                             {columns.map((col) => (
                                 <td key={col.key || col.header} className={col.cellClassName}>
                                     {typeof col.render === "function"

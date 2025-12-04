@@ -97,6 +97,11 @@ export default function ManagerTransactionDetailPage() {
         [adjustmentMutation],
     );
 
+    const adjustmentRows = useMemo(
+        () => adjustmentsQuery.data?.results ?? [],
+        [adjustmentsQuery.data],
+    );
+
     if (txQuery.isLoading) {
         return (
             <div className="flex min-h-[40vh] items-center justify-center">
@@ -124,11 +129,6 @@ export default function ManagerTransactionDetailPage() {
     const promotionList = Array.isArray(tx.promotionIds)
         ? tx.promotionIds.join(", ")
         : "—";
-
-    const adjustmentRows = useMemo(
-        () => adjustmentsQuery.data?.results ?? [],
-        [adjustmentsQuery.data],
-    );
 
     const adjustmentColumns = [
         { header: "ID", render: (row) => <span className="font-mono">#{row.id}</span> },
