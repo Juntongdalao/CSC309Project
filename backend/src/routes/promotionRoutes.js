@@ -75,7 +75,7 @@ router.post('/promotions', authenticateToken, requireRole('manager'), async (req
 router.get('/promotions', authenticateToken, requireRole('regular'), async (req, res) => {
     try {
         const managerView = isManager(req.user);
-        const {name, type, page = 1, limit = 10, started, ended} = req.query;
+        const {name, type, page = 1, limit = 10, started, ended, orderBy = 'name'} = req.query;
         const p = Number(page);
         const l = Number(limit);
         if (!Number.isInteger(p) || p <= 0) {
@@ -92,6 +92,10 @@ router.get('/promotions', authenticateToken, requireRole('regular'), async (req,
         }
         if (started !== undefined && ended !== undefined) {
             return res.status(400).json({error: 'Specify at most one of started or ended.'});
+        }
+        const validOrderBy = ['name', 'startTime', 'endTime'];
+        if (!validOrderBy.includes(String(orderBy))) {
+            return res.status(400).json({ error: `orderBy must be one of: ${validOrderBy.join(', ')}` });
         }
         const where = {};
         if (name) {
@@ -112,13 +116,19 @@ router.get('/promotions', authenticateToken, requireRole('regular'), async (req,
             where.startTime = {lte: now};
             where.endTime = {gt: now};
         }
-        const all = await prisma.promotion.findMany({
-            where,
-            orderBy: {id: 'asc'},
-        });
-        const total = all.length;
-        const slice = all.slice((p - 1) * l, p * l);
-        const results = slice.map(pr => {
+        const skip = (p - 1) * l;
+        const take = l;
+        const orderByField = { [String(orderBy)]: 'asc' };
+        const [total, rows] = await Promise.all([
+            prisma.promotion.count({where}),
+            prisma.promotion.findMany({
+                where,
+                skip,
+                take,
+                orderBy: orderByField,
+            })
+        ]);
+        const results = rows.map(pr => {
             const base = {
                 id: pr.id,
                 name: pr.name,

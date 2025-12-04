@@ -64,7 +64,7 @@ router.post('/events', authenticateToken, requireRole('manager'), async (req, re
 // GET for /events (Regular or higher & Manager or higher)
 router.get('/events', authenticateToken, requireRole('regular'), async (req, res) => {
     try {
-        const {name, location, started, ended, showFull, page = '1', limit = '10', published} = req.query;
+        const {name, location, started, ended, showFull, page = '1', limit = '10', published, orderBy = 'name'} = req.query;
         const p = Number(page);
         const l = Number(limit);
         if (!Number.isInteger(p) || p <= 0) {
@@ -72,6 +72,10 @@ router.get('/events', authenticateToken, requireRole('regular'), async (req, res
         }
         if (!Number.isInteger(l) || l <= 0 || l > 100) {
             return res.status(400).json({error: 'limit must be between 1 and 100'});
+        }
+        const validOrderBy = ['name', 'startTime', 'endTime'];
+        if (!validOrderBy.includes(String(orderBy))) {
+            return res.status(400).json({ error: `orderBy must be one of: ${validOrderBy.join(', ')}` });
         }
         const now = new Date();
         const where = {};
@@ -92,9 +96,10 @@ router.get('/events', authenticateToken, requireRole('regular'), async (req, res
         if (ended !== undefined) {
             where.endTime = toBool(ended) ? {lte: now} : {gt: now};
         }
+        const orderByField = { [String(orderBy)]: 'asc' };
         const raw = await prisma.event.findMany({
             where,
-            orderBy: {id: 'asc'},
+            orderBy: orderByField,
             include: {_count: {select: {guests: true}}},
         });
         let filtered = raw;
@@ -124,7 +129,7 @@ router.get('/events', authenticateToken, requireRole('regular'), async (req, res
 // GET /organizer/events (Regular users assigned as organizers)
 router.get('/organizer/events', authenticateToken, requireRole('regular'), async (req, res) => {
     try {
-        const { name, location, page = '1', limit = '10' } = req.query;
+        const { name, location, page = '1', limit = '10', orderBy = 'startTime' } = req.query;
         const p = Number(page);
         const l = Number(limit);
         if (!Number.isInteger(p) || p <= 0) {
@@ -132,6 +137,10 @@ router.get('/organizer/events', authenticateToken, requireRole('regular'), async
         }
         if (!Number.isInteger(l) || l <= 0 || l > 100) {
             return res.status(400).json({ error: 'limit must be between 1 and 100' });
+        }
+        const validOrderBy = ['name', 'startTime', 'endTime'];
+        if (!validOrderBy.includes(String(orderBy))) {
+            return res.status(400).json({ error: `orderBy must be one of: ${validOrderBy.join(', ')}` });
         }
         const manager = isManager(req.user);
         if (!manager) {
@@ -152,11 +161,12 @@ router.get('/organizer/events', authenticateToken, requireRole('regular'), async
         if (location) {
             where.location = { contains: String(location) };
         }
+        const orderByField = { [String(orderBy)]: 'asc' };
         const [count, events] = await Promise.all([
             prisma.event.count({ where }),
             prisma.event.findMany({
                 where,
-                orderBy: { startTime: 'asc' },
+                orderBy: orderByField,
                 skip: (p - 1) * l,
                 take: l,
                 include: { _count: { select: { guests: true } } },
