@@ -116,7 +116,7 @@ export default function ManagerTransactionDetailPage() {
                 <Card>
                     <p className="text-error">
                         Failed to load transaction: {txQuery.error?.message}
-                    </p>
+                    </p >
                     <Link className="btn btn-link px-0" to="/manager/transactions">
                         Back to transactions
                     </Link>
@@ -169,44 +169,44 @@ export default function ManagerTransactionDetailPage() {
                 {activeTab === "details" ? (
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                         <div>
-                            <p className="text-xs text-neutral/60">User</p>
-                            <p className="text-lg font-semibold">{tx.utorid}</p>
+                            <p className="text-xs text-neutral/60">User</p >
+                            <p className="text-lg font-semibold">{tx.utorid}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Type</p>
-                            <p className="text-lg font-semibold capitalize">{tx.type}</p>
+                            <p className="text-xs text-neutral/60">Type</p >
+                            <p className="text-lg font-semibold capitalize">{tx.type}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Amount</p>
-                            <p className="text-lg font-semibold">{tx.amount}</p>
+                            <p className="text-xs text-neutral/60">Amount</p >
+                            <p className="text-lg font-semibold">{tx.amount}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Spent</p>
-                            <p className="text-lg font-semibold">{tx.spent ?? "—"}</p>
+                            <p className="text-xs text-neutral/60">Spent</p >
+                            <p className="text-lg font-semibold">{tx.spent ?? "—"}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Redeemed</p>
-                            <p className="text-lg font-semibold">{tx.redeemed ?? "—"}</p>
+                            <p className="text-xs text-neutral/60">Redeemed</p >
+                            <p className="text-lg font-semibold">{tx.redeemed ?? "—"}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Related ID</p>
-                            <p className="text-lg font-semibold">{tx.relatedId ?? "—"}</p>
+                            <p className="text-xs text-neutral/60">Related ID</p >
+                            <p className="text-lg font-semibold">{tx.relatedId ?? "—"}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Created By</p>
-                            <p className="text-lg font-semibold">{tx.createdBy ?? "—"}</p>
+                            <p className="text-xs text-neutral/60">Created By</p >
+                            <p className="text-lg font-semibold">{tx.createdBy ?? "—"}</p >
                         </div>
                         <div>
-                            <p className="text-xs text-neutral/60">Processed By</p>
-                            <p className="text-lg font-semibold">{tx.processedBy ?? "—"}</p>
+                            <p className="text-xs text-neutral/60">Processed By</p >
+                            <p className="text-lg font-semibold">{tx.processedBy ?? "—"}</p >
                         </div>
                         <div className="md:col-span-2">
-                            <p className="text-xs text-neutral/60">Promotions</p>
-                            <p className="text-lg font-semibold">{promotionList}</p>
+                            <p className="text-xs text-neutral/60">Promotions</p >
+                            <p className="text-lg font-semibold">{promotionList}</p >
                         </div>
                         <div className="md:col-span-2">
-                            <p className="text-xs text-neutral/60">Remark</p>
-                            <p className="text-base">{tx.remark || "—"}</p>
+                            <p className="text-xs text-neutral/60">Remark</p >
+                            <p className="text-base">{tx.remark || "—"}</p >
                         </div>
                         <div className="md:col-span-2 flex gap-3">
                             <button
@@ -216,6 +216,31 @@ export default function ManagerTransactionDetailPage() {
                             >
                                 {tx.suspicious ? "Mark as not suspicious" : "Mark as suspicious"}
                             </button>
+                        </div>
+                        <div className="md:col-span-2 border-t pt-4 mt-4">
+                            <h3 className="text-lg font-semibold mb-4">Create Adjustment</h3>
+                            <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAdjustmentSubmit}>
+                                <input
+                                    className={managerInputClass}
+                                    type="number"
+                                    placeholder="Adjustment amount"
+                                    value={adjustAmount}
+                                    onChange={(e) => setAdjustAmount(e.target.value)}
+                                />
+                                <input
+                                    className={managerInputClass}
+                                    placeholder="Remark (optional)"
+                                    value={adjustRemark}
+                                    onChange={(e) => setAdjustRemark(e.target.value)}
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary md:col-span-2"
+                                    disabled={adjustmentMutation.isLoading}
+                                >
+                                    {adjustmentMutation.isLoading ? "Creating…" : "Create adjustment"}
+                                </button>
+                            </form>
                         </div>
                     </div>
                 ) : (

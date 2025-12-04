@@ -19,12 +19,9 @@ export default function CashierDashboardPage() {
     const me = useAuthStore((s) => s.user);
     const utorid = me?.utorid;
 
-    const [txType, setTxType] = useState("purchase");
     const [customerUtorid, setCustomerUtorid] = useState("");
     const [spent, setSpent] = useState("");
     const [promoInput, setPromoInput] = useState("");
-    const [adjustAmount, setAdjustAmount] = useState("");
-    const [adjustRelated, setAdjustRelated] = useState("");
     const [remark, setRemark] = useState("");
     const [txMessage, setTxMessage] = useState("");
     const [txError, setTxError] = useState("");
@@ -51,8 +48,6 @@ export default function CashierDashboardPage() {
             setCustomerUtorid("");
             setSpent("");
             setPromoInput("");
-            setAdjustAmount("");
-            setAdjustRelated("");
             setRemark("");
             queryClient.invalidateQueries({ queryKey: ["cashier-transactions"] });
         },
@@ -98,38 +93,18 @@ export default function CashierDashboardPage() {
             return;
         }
 
-        if (txType === "purchase") {
-            const spentValue = Number(spent);
-            if (!Number.isFinite(spentValue) || spentValue <= 0) {
-                setTxError("Spent amount must be a positive number.");
-                return;
-            }
-            createMutation.mutate({
-                utorid: customerUtorid.trim(),
-                type: "purchase",
-                spent: spentValue,
-                remark: remark,
-                promotionIds: parsePromoIds(promoInput),
-            });
-        } else {
-            const amountValue = Number(adjustAmount);
-            const relatedValue = Number(adjustRelated);
-            if (!Number.isInteger(amountValue)) {
-                setTxError("Adjustment amount must be an integer.");
-                return;
-            }
-            if (!Number.isInteger(relatedValue) || relatedValue <= 0) {
-                setTxError("Related transaction ID must be a positive integer.");
-                return;
-            }
-            createMutation.mutate({
-                utorid: customerUtorid.trim(),
-                type: "adjustment",
-                amount: amountValue,
-                relatedId: relatedValue,
-                remark: remark,
-            });
+        const spentValue = Number(spent);
+        if (!Number.isFinite(spentValue) || spentValue <= 0) {
+            setTxError("Spent amount must be a positive number.");
+            return;
         }
+        createMutation.mutate({
+            utorid: customerUtorid.trim(),
+            type: "purchase",
+            spent: spentValue,
+            remark: remark,
+            promotionIds: parsePromoIds(promoInput),
+        });
     }
 
     function handleProcess(e) {
@@ -155,23 +130,23 @@ export default function CashierDashboardPage() {
     return (
         <AppShell
             title="Cashier workspace"
-            subtitle="Record purchases, adjustments, and process pending redemptions."
+            subtitle="Record purchases and process pending redemptions."
         >
             <Card>
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <p className="text-sm text-neutral/70">Signed in as</p>
-                        <p className="text-xl font-semibold">{me?.utorid}</p>
+                        <p className="text-sm text-neutral/70">Signed in as</p >
+                        <p className="text-xl font-semibold">{me?.utorid}</p >
                     </div>
                     <div>
-                        <p className="text-sm text-neutral/70">Role</p>
-                        <p className="text-xl font-semibold capitalize">{me?.role}</p>
+                        <p className="text-sm text-neutral/70">Role</p >
+                        <p className="text-xl font-semibold capitalize">{me?.role}</p >
                     </div>
                 </div>
             </Card>
 
             <div className="grid gap-6 lg:grid-cols-2">
-                <Card title="Create purchase or adjustment">
+                <Card title="Create purchase">
                     {txError && (
                         <div className="alert alert-error mb-4">
                             <span>{txError}</span>
@@ -194,86 +169,31 @@ export default function CashierDashboardPage() {
                                 placeholder="e.g., clive123"
                             />
                         </div>
-                        <div className="flex gap-3">
-                            <label className="label cursor-pointer gap-2">
-                                <input
-                                    type="radio"
-                                    name="txType"
-                                    className="radio radio-primary"
-                                    value="purchase"
-                                    checked={txType === "purchase"}
-                                    onChange={(e) => setTxType(e.target.value)}
-                                />
-                                <span>Purchase</span>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-neutral/70 pl-1">
+                                Amount spent (CAD)
                             </label>
-                            <label className="label cursor-pointer gap-2">
-                                <input
-                                    type="radio"
-                                    name="txType"
-                                    className="radio radio-primary"
-                                    value="adjustment"
-                                    checked={txType === "adjustment"}
-                                    onChange={(e) => setTxType(e.target.value)}
-                                />
-                                <span>Adjustment</span>
-                            </label>
+                            <input
+                                className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={spent}
+                                onChange={(e) => setSpent(e.target.value)}
+                                placeholder="e.g., 24.99"
+                            />
                         </div>
-                        {txType === "purchase" ? (
-                            <>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral/70 pl-1">
-                                        Amount spent (CAD)
-                                    </label>
-                                    <input
-                                        className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={spent}
-                                        onChange={(e) => setSpent(e.target.value)}
-                                        placeholder="e.g., 24.99"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral/70 pl-1">
-                                        Promotion IDs (comma separated)
-                                    </label>
-                                    <input
-                                        className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-                                        value={promoInput}
-                                        onChange={(e) => setPromoInput(e.target.value)}
-                                        placeholder="e.g., 1, 4, 5"
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral/70 pl-1">
-                                        Adjustment amount (points)
-                                    </label>
-                                    <input
-                                        className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-                                        type="number"
-                                        value={adjustAmount}
-                                        onChange={(e) => setAdjustAmount(e.target.value)}
-                                        placeholder="e.g., 100 or -50"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral/70 pl-1">
-                                        Related transaction ID
-                                    </label>
-                                    <input
-                                        className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-                                        type="number"
-                                        value={adjustRelated}
-                                        onChange={(e) => setAdjustRelated(e.target.value)}
-                                        placeholder="Original transaction ID"
-                                    />
-                                </div>
-                            </>
-                        )}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-neutral/70 pl-1">
+                                Promotion IDs (comma separated)
+                            </label>
+                            <input
+                                className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+                                value={promoInput}
+                                onChange={(e) => setPromoInput(e.target.value)}
+                                placeholder="e.g., 1, 4, 5"
+                            />
+                        </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-neutral/70 pl-1">
                                 Remark (optional)
@@ -329,7 +249,7 @@ export default function CashierDashboardPage() {
                         <p className="text-xs text-neutral/60">
                             Tip: Ask the customer to show their redemption QR from "My Redemption QR"
                             page, or enter the transaction ID manually.
-                        </p>
+                        </p >
                     </form>
                 </Card>
             </div>
