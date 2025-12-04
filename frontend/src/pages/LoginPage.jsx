@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-const LOGIN_BG = "/login-bg.png";
+const LOGIN_BG = "/login-background.png";
 
 export default function LoginPage() {
     const [utorid, setUtorid] = useState('');
