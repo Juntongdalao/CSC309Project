@@ -61,6 +61,9 @@ router.post('/', authenticateToken, requireRole('cashier'), async(req, res) => {
         if (existing) {
             return res.status(409).json({error: 'User already exists.'});
         }
+        // Set default password for newly created accounts
+        const defaultPassword = '1uta716eejnoa161vdsj3h2v1zvihny9';
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
         const resetToken = uuidv4();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const user = await prisma.user.create({
@@ -69,7 +72,7 @@ router.post('/', authenticateToken, requireRole('cashier'), async(req, res) => {
                 email,
                 name,
                 verified: false,
-                passwordHash: '',
+                passwordHash,
                 resetToken,
                 expiresAt,
             },
