@@ -266,8 +266,21 @@ export default function Navbar() {
                                 <span className="sr-only">Open navigation</span>
                             </label>
                         )}
-                        <NavLink to="/" className="btn btn-ghost text-xl font-semibold normal-case">
-                            StellarPoints
+                        <NavLink 
+                            to="/" 
+                            className="group relative flex items-center gap-2 px-2 py-1 transition-all duration-200 hover:scale-105"
+                        >
+                            <span 
+                                className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight"
+                                style={{
+                                    backgroundImage: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 50%, #4f46e5 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text',
+                                }}
+                            >
+                                StellarPoints
+                            </span>
                         </NavLink>
                     </div>
 

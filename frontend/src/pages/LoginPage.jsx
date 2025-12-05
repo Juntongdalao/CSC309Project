@@ -67,10 +67,21 @@ export default function LoginPage() {
         >
             <div className="min-h-screen bg-white/80 px-4 py-10 flex flex-col items-center justify-center backdrop-blur-sm">
                 <div className="w-full max-w-md space-y-6 rounded-3xl border border-base-200/70 bg-white/95 p-8 shadow-xl">
-                    <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-semibold text-neutral">Welcome back</h1>
+                    <div className="text-center space-y-4">
+                        <h1 
+                            className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight"
+                            style={{
+                                backgroundImage: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 50%, #4f46e5 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}
+                        >
+                            StellarPoints
+                        </h1>
+                        <h2 className="text-2xl font-semibold text-neutral">Welcome back</h2>
                         <p className="text-base text-neutral/70">
-                            Sign in with your UTORid credentials to access StellarPoints.
+                            Sign in with your UTORid credentials to access your account.
                         </p>
                     </div>
                     <form className="space-y-4" onSubmit={handleSubmit}>
