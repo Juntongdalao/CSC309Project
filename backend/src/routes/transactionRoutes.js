@@ -463,6 +463,77 @@ router.post('/users/me/transactions', authenticateToken, requireRole('regular'),
     }
 });
 
+// POST for /users/me/transactions/transfer (Regular or higher) - Transfer by UTORid
+router.post('/users/me/transactions/transfer', authenticateToken, requireRole('regular'), async (req, res) => {
+    const {recipientUtorid, amount, remark = ''} = req.body || {};
+    if (!isValidUtorid(recipientUtorid)) {
+        return res.status(400).json({ error: 'Invalid recipient UTORid' });
+    }
+    const pts = Number(amount);
+    if (!Number.isInteger(pts) || pts <= 0) {
+        return res.status(400).json({error: 'amount must be a positive integer'});
+    }
+    try {
+        const [sender, recipient] = await Promise.all([
+            prisma.user.findUnique({where: {id: req.user.id}}),
+            prisma.user.findUnique({where: {utorid: recipientUtorid}}),
+        ]);
+        if (!sender) {
+            return res.status(404).json({ error: 'Sender not found' });
+        }
+        if (!recipient) {
+            return res.status(404).json({ error: 'Recipient not found' });
+        }
+        if (sender.id === recipient.id) {
+            return res.status(400).json({ error: 'Cannot transfer to yourself' });
+        }
+        if (!sender.verified) {
+            return res.status(403).json({ error: 'Forbidden: sender not verified' });
+        }
+        if (sender.points < pts) {
+            return res.status(400).json({ error: 'Insufficient points' });
+        }
+        const [senderTx] = await prisma.$transaction([
+            prisma.transaction.create({
+                data: {
+                    userId: sender.id,
+                    type: 'transfer',
+                    amount: -pts,
+                    relatedId: recipient.id,
+                    remark,
+                    promotionIds: [],
+                    createdById: sender.id,
+                },
+            }),
+            prisma.transaction.create({
+                data: {
+                    userId: recipient.id,
+                    type: 'transfer',
+                    amount: pts,
+                    relatedId: sender.id,
+                    remark,
+                    promotionIds: [],
+                    createdById: sender.id,
+                },
+            }),
+            prisma.user.update({where: {id: sender.id}, data: {points: {decrement: pts}}}),
+            prisma.user.update({where: {id: recipient.id}, data: {points: {increment: pts}}}),
+        ]);
+        return res.status(201).json({
+            id: senderTx.id,
+            sender: sender.utorid,
+            recipient: recipient.utorid,
+            type: 'transfer',
+            sent: pts,
+            remark,
+            createdBy: sender.utorid,
+        });
+    } catch (err) {
+        console.error('POST /users/me/transactions/transfer error:', err);
+        return res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
 // POST for /users/:userId/transactions (Regular or higher)
 router.post('/users/:userId/transactions', authenticateToken, requireRole('regular'), async (req, res) => {
     const recipientId = Number(req.params.userId);

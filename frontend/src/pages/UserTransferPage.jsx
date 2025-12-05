@@ -6,7 +6,7 @@ import { apiFetch } from "../lib/apiClient";
 
 export default function UserTransferPage() {
     const queryClient = useQueryClient();
-    const [recipientId, setRecipientId] = useState("");
+    const [recipientUtorid, setRecipientUtorid] = useState("");
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");
     const [formError, setFormError] = useState("");
@@ -18,13 +18,13 @@ export default function UserTransferPage() {
     });
 
     const transferMutation = useMutation({
-        mutationFn: ({ userId, amount, note }) =>
-            apiFetch(`/users/${userId}/transactions`, {
+        mutationFn: ({ recipientUtorid, amount, note }) =>
+            apiFetch("/users/me/transactions/transfer", {
                 method: "POST",
-                body: { type: "transfer", amount, remark: note ?? "" },
+                body: { recipientUtorid, amount, remark: note ?? "" },
             }),
         onSuccess: () => {
-            setRecipientId("");
+            setRecipientUtorid("");
             setAmount("");
             setNote("");
             setFormError("");
@@ -43,11 +43,12 @@ export default function UserTransferPage() {
         setFormError("");
         setSuccessMessage("");
 
-        const numericId = Number(recipientId.trim());
+        const trimmedUtorid = recipientUtorid.trim();
         const numericAmount = Number(amount);
 
-        if (!Number.isInteger(numericId) || numericId <= 0) {
-            setFormError("Recipient user ID must be a positive integer.");
+        // Validate UTORid format (7-8 alphanumeric characters)
+        if (!trimmedUtorid || !/^[A-Za-z0-9]{7,8}$/.test(trimmedUtorid)) {
+            setFormError("Recipient UTORid must be 7-8 alphanumeric characters.");
             return;
         }
         if (!Number.isInteger(numericAmount) || numericAmount <= 0) {
@@ -56,7 +57,7 @@ export default function UserTransferPage() {
         }
 
         transferMutation.mutate({
-            userId: numericId,
+            recipientUtorid: trimmedUtorid,
             amount: numericAmount,
             note: note.trim(),
         });
@@ -95,20 +96,19 @@ export default function UserTransferPage() {
                 )}
                 <form className="grid gap-5" onSubmit={handleSubmit}>
                     <div className="space-y-2">
-                        <label htmlFor="recipientId" className="text-sm font-medium text-neutral/70 pl-1">
-                            Recipient user ID
+                        <label htmlFor="recipientUtorid" className="text-sm font-medium text-neutral/70 pl-1">
+                            Recipient UTORid
                         </label>
                         <input
-                            id="recipientId"
-                            type="number"
-                            min="1"
+                            id="recipientUtorid"
+                            type="text"
                             className="input input-bordered w-full rounded-2xl border-2 border-brand-200 bg-white px-4 py-2 text-neutral focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-                            value={recipientId}
-                            onChange={(e) => setRecipientId(e.target.value)}
-                            placeholder="Numeric user ID (e.g., 3)"
+                            value={recipientUtorid}
+                            onChange={(e) => setRecipientUtorid(e.target.value)}
+                            placeholder="e.g., neville1"
                         />
                         <p className="text-xs text-base-content/60 pl-1">
-                            Use the numeric internal ID shown to managers.
+                            Enter the UTORid of the user you want to send points to.
                         </p>
                     </div>
                     <div className="space-y-2">
