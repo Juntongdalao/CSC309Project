@@ -2,14 +2,21 @@
 
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv'; 
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import promotionRoutes from './routes/promotionRoutes.js';
 
-dotenv.config(); // Loads variables from a .env file into process.env
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env file from the backend root directory (one level up from src/)
+dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 

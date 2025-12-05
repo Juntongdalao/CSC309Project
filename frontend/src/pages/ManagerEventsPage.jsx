@@ -16,6 +16,8 @@ const emptyEventForm = {
     endTime: "",
     capacity: "",
     points: "",
+    latitude: "",
+    longitude: "",
 };
 
 const baseInputClass =
@@ -169,6 +171,8 @@ export default function ManagerEventsPage() {
                 startTime: selectedEvent.data.startTime?.slice(0, 16) ?? "",
                 endTime: selectedEvent.data.endTime?.slice(0, 16) ?? "",
                 capacity: selectedEvent.data.capacity ?? "",
+                latitude: selectedEvent.data.latitude ?? "",
+                longitude: selectedEvent.data.longitude ?? "",
             });
         } else {
             setEditValues(null);
@@ -188,7 +192,7 @@ export default function ManagerEventsPage() {
 
     function handleCreate(e) {
         e.preventDefault();
-        createEvent.mutate({
+        const payload = {
             name: formValues.name,
             description: formValues.description,
             location: formValues.location,
@@ -196,7 +200,17 @@ export default function ManagerEventsPage() {
             endTime: formValues.endTime,
             capacity: formValues.capacity ? Number(formValues.capacity) : null,
             points: Number(formValues.points || 0),
-        });
+        };
+        // Add coordinates if provided
+        if (formValues.latitude && formValues.longitude) {
+            const lat = Number(formValues.latitude);
+            const lng = Number(formValues.longitude);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                payload.latitude = lat;
+                payload.longitude = lng;
+            }
+        }
+        createEvent.mutate(payload);
     }
 
     function handleUpdate(field, value) {
@@ -210,16 +224,26 @@ export default function ManagerEventsPage() {
     function handleEditSubmit(e) {
         e.preventDefault();
         if (!selectedEventId || !editValues) return;
+        const payload = {
+            name: editValues.name,
+            description: editValues.description,
+            location: editValues.location,
+            startTime: editValues.startTime,
+            endTime: editValues.endTime,
+            capacity: editValues.capacity ? Number(editValues.capacity) : null,
+        };
+        // Add coordinates if provided
+        if (editValues.latitude && editValues.longitude) {
+            const lat = Number(editValues.latitude);
+            const lng = Number(editValues.longitude);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                payload.latitude = lat;
+                payload.longitude = lng;
+            }
+        }
         updateEvent.mutate({
             id: selectedEventId,
-            payload: {
-                name: editValues.name,
-                description: editValues.description,
-                location: editValues.location,
-                startTime: editValues.startTime,
-                endTime: editValues.endTime,
-                capacity: editValues.capacity ? Number(editValues.capacity) : null,
-            },
+            payload,
         });
     }
 
@@ -315,6 +339,22 @@ export default function ManagerEventsPage() {
                         value={formValues.points}
                         onChange={(e) => setFormValues({ ...formValues, points: e.target.value })}
                         required
+                    />
+                    <input
+                        className={baseInputClass}
+                        placeholder="Latitude (optional, auto-determined from location if empty)"
+                        type="number"
+                        step="any"
+                        value={formValues.latitude}
+                        onChange={(e) => setFormValues({ ...formValues, latitude: e.target.value })}
+                    />
+                    <input
+                        className={baseInputClass}
+                        placeholder="Longitude (optional, auto-determined from location if empty)"
+                        type="number"
+                        step="any"
+                        value={formValues.longitude}
+                        onChange={(e) => setFormValues({ ...formValues, longitude: e.target.value })}
                     />
                     <button
                         type="submit"
@@ -469,6 +509,22 @@ export default function ManagerEventsPage() {
                                         value={editValues.capacity}
                                         onChange={(e) => setEditValues({ ...editValues, capacity: e.target.value })}
                                         placeholder="Capacity"
+                                    />
+                                    <input
+                                        className={baseInputClass}
+                                        placeholder="Latitude (optional, auto-determined from location if empty)"
+                                        type="number"
+                                        step="any"
+                                        value={editValues.latitude}
+                                        onChange={(e) => setEditValues({ ...editValues, latitude: e.target.value })}
+                                    />
+                                    <input
+                                        className={baseInputClass}
+                                        placeholder="Longitude (optional, auto-determined from location if empty)"
+                                        type="number"
+                                        step="any"
+                                        value={editValues.longitude}
+                                        onChange={(e) => setEditValues({ ...editValues, longitude: e.target.value })}
                                     />
                                     <button type="submit" className="btn btn-primary md:col-span-2" disabled={updateEvent.isLoading}>
                                         {updateEvent.isLoading ? "Saving…" : "Update event"}

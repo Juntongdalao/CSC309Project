@@ -29,6 +29,8 @@ export function listShapeForRegular(ev, numGuests) {
         endTime: ev.endTime.toISOString(),
         capacity: ev.capacity,
         numGuests,
+        latitude: ev.latitude ?? null,
+        longitude: ev.longitude ?? null,
     };
 }
 
@@ -44,5 +46,7 @@ export function listShapeForManager(ev, numGuests) {
         pointsAwarded: ev.pointsAwarded,
         published: ev.published,
         numGuests,
+        latitude: ev.latitude ?? null,
+        longitude: ev.longitude ?? null,
     };
 }

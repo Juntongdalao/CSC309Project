@@ -115,6 +115,14 @@ export default function UserEventsPage() {
         <AppShell
             title="Events"
             subtitle="Browse published events, RSVP, and keep track of attendance."
+            actions={
+                <Link
+                    to="/events/map"
+                    className="btn btn-outline btn-sm"
+                >
+                    View Map
+                </Link>
+            }
         >
             <Card>
                 <FilterBar onSubmit={handleFilterSubmit}>
@@ -178,7 +186,7 @@ export default function UserEventsPage() {
                     <Card>
                         <p className="text-base-content/70">
                             No events match your filters right now.
-                        </p>
+                        </p >
                     </Card>
                 ) : (
                     <>
@@ -195,7 +203,7 @@ export default function UserEventsPage() {
                                             </h3>
                                             <p className="text-sm text-base-content/60">
                                                 {event.location}
-                                            </p>
+                                            </p >
                                         </div>
                                         <span className="badge badge-outline">
                                             {event.capacity == null
@@ -206,7 +214,7 @@ export default function UserEventsPage() {
                                     <p className="text-sm text-base-content/70">
                                         {formatDateTime(event.startTime)} –{" "}
                                         {formatDateTime(event.endTime)}
-                                    </p>
+                                    </p >
                                     <div className="mt-auto flex flex-wrap gap-2">
                                         <button
                                             type="button"

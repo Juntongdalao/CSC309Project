@@ -34,7 +34,7 @@ async function seedUsers() {
     const passwordHash = await bcrypt.hash(PASSWORD, 10);
     const seeds = [
         // Staff (1 superuser, 2 managers, 3 cashiers)
-        { utorid: 'dumbledor', role: 'superuser', name: 'Albus Dumbledore', email: 'dumbledor@utoronto.ca', points: 5000, verified: true },
+        { utorid: 'superman', role: 'superuser', name: 'Super Man', email: 'superman@utoronto.ca', points: 5000, verified: true },
         { utorid: 'gandalf01', role: 'manager', name: 'Gandalf the Grey', email: 'gandalf01@utoronto.ca', points: 3500, verified: true },
         { utorid: 'yoda1234', role: 'manager', name: 'Master Yoda', email: 'yoda1234@utoronto.ca', points: 3200, verified: true },
         { utorid: 'hermione', role: 'cashier', name: 'Hermione Granger', email: 'hermione@utoronto.ca', points: 2800, verified: true },
@@ -377,6 +377,31 @@ async function seedPromotions() {
         records.push(await prisma.promotion.create({ data: promo }));
     }
     return records;
+}
+
+// Location to coordinates mapping for University of Toronto
+const locationCoordinates = {
+    'Hart House Great Hall': { lat: 43.6640136, lng: -79.3943321 },
+    'Hart House Quad': { lat: 43.6640136, lng: -79.3943321 },
+    'Hart House': { lat: 43.6640136, lng: -79.3943321 },
+    'Hart House Music Room': { lat: 43.6640136, lng: -79.3943321 },
+    'Back Campus Fields': { lat: 43.6638836, lng: -79.3963567 },
+    'Innis Town Hall': { lat: 43.6655722, lng: -79.3995847 },
+    'Innis Cafe': { lat: 43.6655368, lng: -79.3997895 },
+    'Bahen Centre VR Lab': { lat: 43.6598045, lng: -79.397298 },
+    'Bahen Centre Atrium': { lat: 43.6598045, lng: -79.397298 },
+    'Bahen Centre': { lat: 43.6598045, lng: -79.397298 },
+    'Sid Smith Commons': { lat: 43.6640627, lng: -79.4000079 },
+    'Robarts Commons': { lat: 43.6640627, lng: -79.4000079 },
+    'Robarts Library': { lat: 43.664486, lng: -79.39969 },
+    'Athletic Centre Studio': { lat: 43.6607349, lng: -79.3966122 },
+    'Myhal Centre': { lat: 43.6607349, lng: -79.3966122 },
+    'Convocation Hall': { lat: 43.6609085, lng: -79.3952327 },
+    'Campus-wide': { lat: 43.6532, lng: -79.3832 }, // University of Toronto main
+};
+
+function getCoordinatesForLocation(location) {
+    return locationCoordinates[location] || null;
 }
 
 async function seedEvents(userMap) {
@@ -831,7 +856,7 @@ async function seedEvents(userMap) {
             capacity: 250,
             pointsTotal: 3500,
             published: true,
-            organizers: ['dumbledor', 'gandalf01'],
+            organizers: ['superman', 'gandalf01'],
             guests: ['harrypot', 'luke1234', 'tonystar', 'elrond01'],
             awards: [
                 { utorid: 'harrypot', amount: 60, remark: 'Outstanding student leader' },
@@ -856,6 +881,7 @@ async function seedEvents(userMap) {
 
     const map = {};
     for (const event of events) {
+        const coords = getCoordinatesForLocation(event.location);
         const created = await prisma.event.create({
             data: {
                 name: event.name,
@@ -867,6 +893,8 @@ async function seedEvents(userMap) {
                 pointsTotal: event.pointsTotal,
                 pointsRemain: event.pointsTotal,
                 published: event.published,
+                latitude: coords?.lat ?? null,
+                longitude: coords?.lng ?? null,
             },
         });
         map[event.key] = created;

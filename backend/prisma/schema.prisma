@@ -94,6 +94,9 @@ model Event {
 
   organizers    EventOrganizer[]
   guests        EventGuest[]
+
+  latitude   Float?   // For map positioning
+  longitude  Float?   // For map positioning
 }
 
 model EventOrganizer {

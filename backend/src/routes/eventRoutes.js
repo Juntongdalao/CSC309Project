@@ -8,13 +8,14 @@ import { isValidUtorid } from '../helpers/validation.js';
 import { isManager, parseISO, toBool, 
     isManagerOrHigher, isOrganizer, listShapeForRegular, 
     listShapeForManager} from '../helpers/clearance.js';
+import { geocodeAddress } from '../helpers/geocoding.js';
 
 const router = express.Router();
 
 // POST for /events (Manager or higher)
 router.post('/events', authenticateToken, requireRole('manager'), async (req, res) => {
     try {
-        const {name, description, location, startTime, endTime, capacity, points} = req.body;
+        const {name, description, location, startTime, endTime, capacity, points, latitude, longitude} = req.body;
         if (!name || !description || !location) {
             return res.status(400).json({error: 'name, description, location are required.'});
         }
@@ -29,6 +30,25 @@ router.post('/events', authenticateToken, requireRole('manager'), async (req, re
         if (!Number.isInteger(points) || points <= 0) {
             return res.status(400).json({error: 'points must be a positive integer.'});
         }
+        
+        // Use manual coordinates if provided and valid, otherwise geocode
+        let finalLat = null;
+        let finalLng = null;
+        if (typeof latitude === 'number' && typeof longitude === 'number' &&
+            !isNaN(latitude) && !isNaN(longitude) &&
+            latitude >= -90 && latitude <= 90 &&
+            longitude >= -180 && longitude <= 180) {
+            finalLat = latitude;
+            finalLng = longitude;
+        } else {
+            // Geocode the location
+            const geocodeResult = await geocodeAddress(location);
+            if (geocodeResult) {
+                finalLat = geocodeResult.latitude;
+                finalLng = geocodeResult.longitude;
+            }
+        }
+        
         const created = await prisma.event.create({
             data: {
                 name, 
@@ -39,6 +59,8 @@ router.post('/events', authenticateToken, requireRole('manager'), async (req, re
                 capacity: capacity ?? null,
                 pointsTotal: points,
                 pointsRemain: points,
+                latitude: finalLat,
+                longitude: finalLng,
             }
         });
         return res.status(201).json({
@@ -123,6 +145,59 @@ router.get('/events', authenticateToken, requireRole('regular'), async (req, res
     } catch (err) {
         console.error('List events error:', err);
         return res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+// GET /events/map - Get all published events with coordinates for map display
+// MUST be before /events/:eventId to avoid route conflict
+router.get('/events/map', authenticateToken, requireRole('regular'), async (req, res) => {
+    try {
+        const events = await prisma.event.findMany({
+            where: {
+                published: true,
+            },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                location: true,
+                startTime: true,
+                endTime: true,
+                capacity: true,
+                latitude: true,
+                longitude: true,
+                _count: {
+                    select: { guests: true },
+                },
+            },
+            orderBy: { startTime: 'asc' },
+        });
+
+        // Filter to only include events with coordinates and map the results
+        const results = events
+            .filter(ev => ev.latitude != null && ev.longitude != null)
+            .map(ev => ({
+                id: ev.id,
+                name: ev.name,
+                description: ev.description,
+                location: ev.location,
+                startTime: ev.startTime.toISOString(),
+                endTime: ev.endTime.toISOString(),
+                capacity: ev.capacity,
+                numGuests: ev._count.guests,
+                latitude: ev.latitude,
+                longitude: ev.longitude,
+                isFull: ev.capacity != null && ev._count.guests >= ev.capacity,
+            }));
+
+        return res.status(200).json({ count: results.length, results });
+    } catch (err) {
+        console.error('Get events for map error:', err);
+        console.error('Error details:', err.message, err.stack);
+        return res.status(500).json({ 
+            error: 'Internal Server Error',
+            message: err.message 
+        });
     }
 });
 
@@ -225,6 +300,8 @@ router.get('/events/:eventId', authenticateToken, requireRole('regular'), async 
                 pointsRemain: ev.pointsRemain,
                 pointsAwarded: ev.pointsAwarded,
                 published: ev.published,
+                latitude: ev.latitude,
+                longitude: ev.longitude,
                 guests: ev.guests.map(g => ({
                     id: g.user.id, utorid: g.user.utorid, name: g.user.name ?? null,
                 })),
@@ -291,6 +368,33 @@ router.patch('/events/:eventId', authenticateToken, requireRole('regular'), asyn
         }
         if (typeof body.location === 'string' && body.location.trim().length > 0) {
             data.location = body.location.trim();
+            // Use manual coordinates if provided, otherwise geocode
+            if (typeof body.latitude === 'number' && typeof body.longitude === 'number' &&
+                !isNaN(body.latitude) && !isNaN(body.longitude) &&
+                body.latitude >= -90 && body.latitude <= 90 &&
+                body.longitude >= -180 && body.longitude <= 180) {
+                data.latitude = body.latitude;
+                data.longitude = body.longitude;
+            } else {
+                // Geocode the new location
+                const geocodeResult = await geocodeAddress(data.location);
+                if (geocodeResult) {
+                    data.latitude = geocodeResult.latitude;
+                    data.longitude = geocodeResult.longitude;
+                } else {
+                    // Clear coordinates if geocoding fails
+                    data.latitude = null;
+                    data.longitude = null;
+                }
+            }
+        }
+        // Allow manual coordinate updates even if location isn't changing
+        if (typeof body.latitude === 'number' && typeof body.longitude === 'number' &&
+            !isNaN(body.latitude) && !isNaN(body.longitude) &&
+            body.latitude >= -90 && body.latitude <= 90 &&
+            body.longitude >= -180 && body.longitude <= 180) {
+            data.latitude = body.latitude;
+            data.longitude = body.longitude;
         }
         if (typeof body.startTime === 'string') {
             const s = parseISO(body.startTime);

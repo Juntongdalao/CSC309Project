@@ -14,7 +14,8 @@
   "author": "Steller Points",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.18.0",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
+    "@prisma/client": "^6.19.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -27,6 +28,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "prisma": "^6.18.0"
+    "prisma": "^6.19.0"
   }
 }

@@ -23,6 +23,7 @@ import ManagerTransactionDetailPage from "./pages/ManagerTransactionDetailPage.j
 import ManagerEventsPage from "./pages/ManagerEventsPage.jsx";
 import OrganizerEventsPage from "./pages/OrganizerEventsPage.jsx";
 import OrganizerEventDetailPage from "./pages/OrganizerEventDetailPage.jsx";
+import EventsMapPage from "./pages/EventsMapPage.jsx";
 
 export default function App() {
   return (
@@ -94,6 +95,14 @@ export default function App() {
             element={
               <AuthGate minRole="regular">
                 <UserEventsPage />
+              </AuthGate>
+            }
+        />
+        <Route
+            path="/events/map"
+            element={
+              <AuthGate minRole="regular">
+                <EventsMapPage />
               </AuthGate>
             }
         />
